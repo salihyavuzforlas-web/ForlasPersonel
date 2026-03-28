@@ -116,6 +116,8 @@ export const mapPromotionCampaign = (row: any): PromotionCampaign => ({
   targetAudience: row.target_audience || row.targetAudience,
   budget: row.budget != null ? Number(row.budget) : undefined,
   discountRate: row.discount_rate != null ? Number(row.discount_rate) : undefined,
+  imageData: row.image_data || row.imageData || row.raw?.image_data || row.raw?.imageData,
+  imageType: row.image_type || row.imageType || row.raw?.image_type || row.raw?.imageType,
   isActive: !!row.is_active,
   createdById: row.created_by_id || row.createdById,
   createdByName: row.created_by_name || row.createdByName,

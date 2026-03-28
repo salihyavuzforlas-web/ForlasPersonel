@@ -109,6 +109,8 @@ export interface PromotionCampaign {
   targetAudience: string;
   budget?: number;
   discountRate?: number;
+  imageData?: string;
+  imageType?: string;
   isActive: boolean;
   createdById: string;
   createdByName: string;
