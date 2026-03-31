@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+    
+    function getUserRole() { 
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return getUserRole() == "YONETICI" || getUserRole() == "YÖNETİCİ";
+    }
+
+    function isFinanceManager() {
+      return getUserRole() == "FINANS_MUDURU";
+    }
+
+    function isRouteManager() {
+      return getUserRole() == "SEVKIYAT_MUDURU";
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (
+        request.auth.uid == userId ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && isAdmin() && request.auth.uid != userId;
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isFinanceManager() ||
+        isAdmin()
+      );
+      
+      allow create: if isSignedIn() && (
+        getUserRole() == "PERSONEL" ||
+        isAdmin()
+      );
+      
+      allow update, delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status != "APPROVED") ||
+        isFinanceManager() ||
+        isAdmin()
+      );
+    }
+
+    match /routePlans/{routePlanId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        isRouteManager() ||
+        resource.data.assignedUserId == request.auth.uid ||
+        resource.data.createdById == request.auth.uid
+      );
+
+      allow create: if isSignedIn() && (
+        isAdmin() ||
+        isRouteManager()
+      );
+
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        isRouteManager()
+      );
+
+      allow delete: if isSignedIn() && (
+        isAdmin() ||
+        isRouteManager()
+      );
+    }
+
+    match /meetingNotes/{meetingNoteId} {
+      allow read: if isSignedIn();
+
+      allow create, update, delete: if isSignedIn() &&
+        isAdmin();
+    }
+
+    match /promotionsCampaigns/{promotionId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.isActive == true
+      );
+
+      allow create, update, delete: if isSignedIn() &&
+        isAdmin();
+    }
+  }
+}
+
